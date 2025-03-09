@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: budfin-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: budfin
+      POSTGRES_PASSWORD: budfin_password
+      POSTGRES_DB: budfin_users
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - budfin-network
+
+  user-management-service:
+    build:
+      context: ./services/user-management/user-management-service
+      dockerfile: Dockerfile
+    container_name: budfin-user-service
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=budfin
+      - DATABASE_PASSWORD=budfin_password
+      - DATABASE_NAME=budfin_users
+      - JWT_SECRET=change_this_in_production
+      - NODE_ENV=development
+    depends_on:
+      - postgres
+    networks:
+      - budfin-network
+    volumes:
+      - ./services/user-management/user-management-service:/app
+      - /app/node_modules
+
+networks:
+  budfin-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
